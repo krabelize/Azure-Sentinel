@@ -23,8 +23,7 @@
 //
 //
 // IMPORTANT NOTE:
-// If you have data in Syslog table then you need to change the Meraki device list in the query below
-let MerakiSyslogDevices = pack_array("server1", "server2"); // replace server1 and server2 with your actual Cisco Meraki device(s) and add more with comma separated
+// If you have data in Syslog table then you need to change the Meraki device list in the query belowlet MerakiSyslogDevices = pack_array("server1", "server2"); // replace server1 and server2 with your actual Cisco Meraki device(s) and add more with comma separated
 union isfuzzy=true
         (
 			meraki_CL
@@ -34,17 +33,6 @@ union isfuzzy=true
 			Syslog
 			| where Computer in (MerakiSyslogDevices)
 			| project-rename LogMessage =  SyslogMessage
-        ),
-        (
-            CiscoMerakiNativePoller_CL
-            | extend LogMessage = ""
-            | extend
-                     Action = DvcAction,
-                     Message = EventMessage,
-                     NetworkProtocol = coalesce(NetworkProtocol, NetworkApplicationProtocol),
-                     Sha256 = Hash
-            | extend Signature = extract(@"signature=(\S+);",1,tostring(AdditionalFields)),
-                     LogType = iff(EventOriginalType == "IDS Alert", "ids-alerts", "security_event")
         )
 | extend Parser = extract_all(@"(\d+.\d+)\s([\w\-\_]+)\s([\w\-\_]+)\s([\S\s]+)$", dynamic([1, 2, 3, 4]), LogMessage)[0]
 | extend Epoch = tostring(Parser[0]),
